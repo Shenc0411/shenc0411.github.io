@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+
+		<script type="text/javascript" async			src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML">
+		</script>
+		<script type="text/x-mathjax-config">
+		MathJax.Hub.Config({
+			tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+		});
+		</script>
+		
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>CS445 Project3 Gradient-Domain Fusion</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom fonts for this template -->
+    <link href="vendor/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic" rel="stylesheet" type="text/css">
+    <link href='https://fonts.googleapis.com/css?family=Cabin:700' rel='stylesheet' type='text/css'>
+
+    <!-- Custom styles for this template -->
+    <link href="css/grayscale.min.css" rel="stylesheet">
+
+  </head>
+
+  <body id="page-top">
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+      <div class="container">
+        <a class="navbar-brand js-scroll-trigger" href="#page-top">CS445 Computational Photography</a>
+      </div>
+    </nav>
+
+    <!-- Intro Header -->
+    <header class="masthead">
+      <div class="intro-body">
+        <div class="container">
+          <div class="row">
+            <div class="col-lg-8 mx-auto">
+              <h1 class="brand-heading">Project 3</h1>
+              <p class="intro-text">Gradient-Domain Fusion
+                <br>by Cong Shen (cshen19)</p>
+              <a href="#about" class="btn btn-circle js-scroll-trigger">
+                <i class="fa fa-angle-double-down animated"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- About Section -->
+    <section id="about" class="content-section">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-8 mx-auto">
+            <h2>overview of this project</h2>
+            <p>This project mainly focuses on gradient-domain image fusion by setting up constraints on the output images and converting these problems into linear least square problems.</p>
+            <p>More information can be found on:
+              <br><a href="https://courses.engr.illinois.edu/cs445/fa2017/projects/gradient/ComputationalPhotography_ProjectGradient.html">CS445 Course Website</a>
+              and
+              <a href="http://www.cs.brown.edu/courses/csci1950-g/asgn/proj2/resources/PoissonImageEditing.pdf">Perez et al. 2003 paper</a>.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Download Section -->
+    <section id="toyproblem" class="content-section">
+      <div class="container">
+        <div class="col-lg-8 mx-auto">
+          <h2>Toy Problem</h2>
+          <p>This is just an example for how to set up constraints and construct output images by solving linear least square problems.</p>
+					<p>Here is the sample image:</p>
+					<img class="img-fluid" src="images/toy_problem.png" alt="">
+					<br><br>
+					<p>Setting up the following constraints on the ouput image:</p>
+					<ol>
+						<li>minimize $(v(x + 1, y) - v(x, y) - (s(x + 1, y) - s(x, y)))^2 $</li>
+						<li>minimize $(v(x, y + 1) - v(x, y) - (s(x, y + 1) - s(x, y)))^2$</li>
+						<li>minimize $(v(1, 1) - s(1, 1))^2$</li>
+					</ol>
+					<p>We can now construct linear least square $Av = b$, where v is the pixel values of the output image, A is the coefficient matrix of equations and b is the vector of constants in the equations.</p>
+					<p>Take $(v(x + 1, y) - v(x, y) - (s(x + 1, y)-s(x, y)))^2$ as an example. Since we want to minimize the value of it, we can write it as $v(x + 1, y) - v(x, y) = s(x + 1, y) - s(x, y)$. Suppose $i$ correspond to the index of $v(x + 1, y)$ and $j$ correspond to the index of $v(y, x)$ in vector $b$. Then we can insert a new row $k$ into $A$ and $b$, where $A(k, i) = 1, A(k, j) = -1, B(k) = s(x + 1, y) - s(x, y)$ and rest of $A(k)$ will all be $0$.</p>
+					<p>Then solve $ A$ \ $ b $ to obtain the pixel values of the output image, which is almost the same as the input image (with error of about $9e^{-14}$).</p>
+        </div>
+      </div>
+    </section>
+
+		<section id="poissonblend" class="content-section">
+      <div class="container">
+        <div class="col-lg-8 mx-auto">
+          <h2>Poisson Blending</h2>
+          <p>In this part, we will be blending two images - one as the foregorund and the other as the background. </p>
+					<div class="row">
+						<div class="col-lg-6">
+							<p>Foreground Image:</p>
+							<img class = "img-fluid" src="images/rainbow.jpg" alt="">	
+						</div>
+						<div class="col-lg-6">
+							<p>Background Image:</p>
+							<img class = "img-fluid" src="images/landscape.jpg" alt="">
+						</div>
+					</div>
+						
+					<p>A simple solution is to copy paste the foreground image onto the background image:</p>
+					<img class = "img-fluid" src="images/rainbow-landscape-copypaste.jpg" alt="">
+					<p>Obviously, this can not even fool people in 1800s.</p>
+					<p>Fortunately, we have an alternative approach - Possion blending, which can significantlty improve the result of blending.</p>
+					<p>For every pixel $s(y, x)$ in the foreground, for its neighboring pixels at $(y + j, x + i)$, $i \in \{1, -1\}, j \in \{1, -1\}$, try to maintain the gradient between them. </p>
+					<p>Setting up the following constraints on the ouput image:</p>
+					<ol>
+						<li>minimize $$\sum_{i \in S, j \in N_i \cap S} ((v_i - v_j) - (s_i - s_j))^2$$  </li>
+						<li>minimize $$\sum_{i \in S, j \in N_i \cap \neg S} ((v_i - t_j) - (s_i - s_j))^2$$</li>
+					</ol>
+					<p>Similarly, solve $ A$ \ $ b $ to obtain the output image.</p>
+					<p>Here is the result:</p>
+					<img class = "img-fluid" src="images/rainbow-landscape-poisson.jpg" alt="">
+					<p>This is much better than the copy-paste approach.</p>
+					<p>Here is another result, which is not quite ideal:</p>
+					<div class="row">
+						<div class="col-lg-6">
+							<p>Foreground Image:</p>
+							<img class = "img-fluid" src="images/lion.jpg" alt="">	
+						</div>
+						<div class="col-lg-6">
+							<p>Background Image:</p>
+							<img class = "img-fluid" src="images/quad.jpeg" alt="">
+						</div>
+					</div>
+						<br>
+					<img class = "img-fluid" src="images/lion-quad-poisson.jpg" alt="">
+						<p>As is shown in the reuslt image, the color of the lion is way too greenish, which is a result of maintaining the gradient between the greenish pixel in the background image and the margin of the foreground image.</p>
+						<p>Here is another good result</p>
+						<div class="row">
+						<div class="col-lg-6">
+							<p>Foreground Image:</p>
+							<img class = "img-fluid" src="images/penguin-chick.jpeg" alt="">	
+						</div>
+						<div class="col-lg-6">
+							<p>Background Image:</p>
+							<img class = "img-fluid" src="images/im2.JPG" alt="">
+						</div>
+					</div>
+						<br>
+					<img class = "img-fluid" src="images/penguin-possion.jpg" alt="">
+        </div>
+					
+      </div>
+    </section>
+		
+		<section id="mixedgradient" class="content-section">
+      <div class="container">
+        <div class="col-lg-8 mx-auto">
+          <h2>Mixed Gradient</h2>
+          <p>This approach is pretty similar to Possion blending in the previous part except that instead of only using the gradient of the foreground image, we are comparing it to the gradient of the background image and select the one with greater absolute value.</p>
+					<p>Setting up the following constraints on the ouput image:</p>
+					<ol>
+				<li>minimize $$\sum_{i \in S, j \in N_i \cap S} ((v_i - v_j) - d_{ij})^2$$  </li>
+						<li>minimize $$\sum_{i \in S, j \in N_i \cap \neg S} ((v_i - t_j) - d_{ij})^2$$</li>
+					</ol>
+					<p>, where $d_{ij} = s_i - s_j$ if $|s_i - s_j| > |t_i - t_j|$, otherwise $d_{ij} = t_i - t_j$</p>
+					<p>Similarly, solve $ A$ \ $ b $ to obtain the output image.</p>
+					<p>Here is the result:</p>
+					<div class="row">
+						<div class="col-lg-6">
+							<p>Foreground Image:</p>
+							<img class = "img-fluid" src="images/rainbow.jpg" alt="">	
+						</div>
+						<div class="col-lg-6">
+							<p>Background Image:</p>
+							<img class = "img-fluid" src="images/landscape.jpg" alt="">
+						</div>
+					</div>
+						<br>
+					<img class = "img-fluid" src="images/rainbow-landscape-mixed.jpg" alt="">
+						<p>As a result of using mixed gradient, some of the patterns and color of the background image are been preserved in the result image, which makes the rainbow look more transparent. In this example, using mixed gradient improved the result.</p>
+						<p>However, the transparent-ish foreground image may also result in relatively poor result:</p>
+						<div class="row">
+						<div class="col-lg-6">
+							<p>Foreground Image:</p>
+							<img class = "img-fluid" src="images/ship.jpg" alt="">	
+						</div>
+						<div class="col-lg-6">
+							<p>Background Image:</p>
+							<img class = "img-fluid" src="images/ocean.jpg" alt="">
+						</div>
+					</div>
+						<p>Poisson Blending:</p>
+						<img class = "img-fluid" src="images/ship-ocean-poisson.jpg" alt="">	
+						<p>Mixed Gradient:</p>
+						<img class = "img-fluid" src="images/ship-ocean-mixed.jpg" alt="">
+        </div>
+					
+      </div>
+    </section>
+		
+		<section id="color2gray" class="content-section">
+      <div class="container">
+        <div class="col-lg-8 mx-auto">
+          <h2>Color2Gray</h2>
+						<p>In the process of converting colored image into grayscale image, we may lose important gradient information. As is shown in the following images</p>
+						<div class="row">
+						<div class="col-lg-6">
+							<p>Original Image:</p>
+							<img class = "img-fluid" src="images/colorBlind4.png" alt="">	
+						</div>
+						<div class="col-lg-6">
+							<p>Grayscale Image(obtained by rgb2gray funtion in matlab):</p>
+							<img class = "img-fluid" src="images/rgb2gray.jpg" alt="">
+						</div>
+						</div>
+						<p>In this approach, we are trying to preseve the gradient of the original image as well as to have similar intensity of the grayscale image.</p>
+					<p>Setting up the following constraints on the ouput image(let $g$ be the grayscale image):</p>
+					<ol>
+						<li>minimize $$\sum_{i \in S} (v_i - g_i)^2$$  </li>
+						<li>minimize $$\sum_{i \in S, j \in N_i} ((v_i - v_j) - (s_i - s_j)))^2$$</li>
+					</ol>
+					<p>Similarly, solve $ A$ \ $ b $ to obtain the output image.</p>
+					<p>Here is the result:</p>
+					<img class = "img-fluid" src="images/color2gray.jpg" alt="">
+						<p>In comparison to the grayscale image, the numer "4" is still slightly noticiable in the result image</p>
+        </div>
+					
+      </div>
+    </section>	
+			
+
+    <!-- Footer -->
+    <footer>
+      <div class="container text-center">
+        <p>Copyright &copy; Cong Shen 2017</p>
+      </div>
+    </footer>
+
+    <!-- Bootstrap core JavaScript -->
+    <script src="vendor/jquery/jquery.min.js"></script>
+    <script src="vendor/popper/popper.min.js"></script>
+    <script src="vendor/bootstrap/js/bootstrap.min.js"></script>
+
+    <!-- Plugin JavaScript -->
+    <script src="vendor/jquery-easing/jquery.easing.min.js"></script>
+
+    <!-- Google Maps API Key - Use your own API key to enable the map feature. More information on the Google Maps API can be found at https://developers.google.com/maps/ -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCRngKslUGJTlibkQ3FkfTxj3Xss1UlZDA&sensor=false"></script>
+
+    <!-- Custom scripts for this template -->
+    <script src="js/grayscale.min.js"></script>
+
+  </body>
+
+</html>

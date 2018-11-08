@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+
+    
+    <script type="text/javascript" async			src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML">
+    </script>
+		<script type="text/x-mathjax-config">
+		MathJax.Hub.Config({
+			tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+		});
+    </script>
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>CS445 Computational Photography Project 3</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="vendor/bootstrap/css/bootstrap.css" rel="stylesheet">
+
+    <!-- Custom fonts for this template -->
+    <link href="vendor/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic" rel="stylesheet" type="text/css">
+    <link href='https://fonts.googleapis.com/css?family=Cabin:700' rel='stylesheet' type='text/css'>
+
+    <!-- Custom styles for this template -->
+    <link href="css/grayscale.css" rel="stylesheet">
+
+  </head>
+
+  <body id="page-top">
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+      <div class="container">
+        <a class="navbar-brand js-scroll-trigger" href="#page-top">CS445 Computational Photography</a>
+      </div>
+    </nav>
+
+    <!-- Intro Header -->
+    <header class="masthead">
+      <div class="intro-body">
+        <div class="container">
+          <div class="row">
+            <div class="col-lg-8 mx-auto">
+              <h1 class="brand-heading">Project 4</h1>
+              <p class="intro-text">Image Based Lighting</p>
+              <p class="intro-text">By Xintong Wu (xwu68) and Cong Shen (cshen19)</p>
+              <a href="#about" class="btn btn-circle js-scroll-trigger">
+                <i class="fa fa-angle-double-down animated"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- About Section -->
+    <section id="about" class="content-section">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-8 mx-auto">
+            <h2>About this project</h2>
+            <p>In this project, we focused on rendering synthetic objects into 2d photographs. In order to create realistic-looking photographs, we created HDR images from several LDR images and perform panoramic transformations on photographs. More information about this project can be found on the course website and Debevec's paper:</p>
+            <ul>
+              <li><a href="https://courses.engr.illinois.edu/cs445/fa2017/projects/ibl/ComputationalPhotography_ProjectIBL.html">CS445 Project 4 - Image Based Lighting</a></li>
+              <li><a href="http://www.pauldebevec.com/Research/IBL/debevec-siggraph98.pdf">Rendering Synthetic Objects into Real Scenes: Bridging Traditional and Image-based Graphics with Global Illumination and High Dynamic Range Photography (By Paul Debevec)</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="part1" class="content-section">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-8 mx-auto">
+            <h2>PART I: Recovering HDR Radiance Maps</h2>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-lg-8 mx-auto">
+            <h4>1. LDR Images</h4>
+            <p>Here are the LDR images of the mirror ball we have taken:</p>
+            <div class="row">
+              <div class="col-lg-4">
+                <img class="img-fluid" src="result_img/source_img/bright.jpg">
+                <p>Exposure: 1/6<p>
+              </div>
+              <div class="col-lg-4">
+                <img class="img-fluid" src="result_img/source_img/normal.jpg">
+                <p>Exposure: 1/25<p>
+              </div>
+              <div class="col-lg-4">
+                <img class="img-fluid" src="result_img/source_img/dark.jpg">
+                <p>Exposure: 1/100<p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-lg-8 mx-auto">
+            <h4>2. Naive LDR Merging</h4>
+            <p>The simplest approach to create an HDR image is to divide all pixels in LDR images by their exposure time, add three images together and take the average of them. However, this approach can result in relatively poor results as following.</p>
+            <p>Estimated Log Irradiance:</p>
+            <div class="row">
+              <div class="col-lg-4">
+                <img class="img-fluid" src="result_img/Recovering_HDR_Radiance_Maps/lir1.png">
+                <p>Exposure: 1/6<p>
+              </div>
+              <div class="col-lg-4">
+                <img class="img-fluid" src="result_img/Recovering_HDR_Radiance_Maps/lir2.png">
+                <p>Exposure: 1/25<p>
+              </div>
+              <div class="col-lg-4">
+                <img class="img-fluid" src="result_img/Recovering_HDR_Radiance_Maps/lir3.png">
+                <p>Exposure: 1/100<p>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-lg-4">
+                <img class="img-fluid" src="result_img/Recovering_HDR_Radiance_Maps/naive_hdr_log.png">
+                <p>HDR Log Irradiance<p>
+              </div>
+              <div class="col-lg-4">
+                <img class="img-fluid" src="result_img/Recovering_HDR_Radiance_Maps/naive_hdr_tone.png">
+                <p>ToneMapped HDR<p>
+              </div>
+              <div class="col-lg-4">
+              </div>
+            </div>
+            <p></p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-lg-8 mx-auto">
+            <h4>3. LDR Merging with Weighting Function</h4>
+            <p>Another slightly improved approach is to use a weighing function which gives pixels with small or large values(under- or over-exposed) small weights in the averaging process. Here is the result:</p>
+            <p>Estimated Log Irradiance:</p>
+            <div class="row">
+              <div class="col-lg-4">
+                <img class="img-fluid" src="result_img/Recovering_HDR_Radiance_Maps/lir1.png">
+                <p>Exposure: 1/6<p>
+              </div>
+              <div class="col-lg-4">
+                <img class="img-fluid" src="result_img/Recovering_HDR_Radiance_Maps/lir2.png">
+                <p>Exposure: 1/25<p>
+              </div>
+              <div class="col-lg-4">
+                <img class="img-fluid" src="result_img/Recovering_HDR_Radiance_Maps/lir3.png">
+                <p>Exposure: 1/100<p>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-lg-4">
+                <img class="img-fluid" src="result_img/Recovering_HDR_Radiance_Maps/hdr_naive_weighted_log.png">
+                <p>HDR Log Irradiance<p>
+              </div>
+              <div class="col-lg-4">
+                <img class="img-fluid" src="result_img/Recovering_HDR_Radiance_Maps/weighted_naive_tone.png">
+                <p>ToneMapped HDR<p>
+              </div>
+              <div class="col-lg-4">
+              </div>
+            </div>
+            <p></p>
+            <p>Weighting Function: $w = @(z) double(128-abs(z-128))$ </p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-lg-8 mx-auto">
+            <h4>4. LDR merging and response function estimation</h4>
+            <p>In order to get a better result, we used the film response function($g$) to recover the true irradiance of each image as nearly all cameras apply a non-linear function to recorded raw pixel values in order to better simulate human vision. Since we have three photos, we calcualte the log irradiance corresponding to pixels with value from 1 to 255. We apply the gsolve function in this case and to avoid crashing the memory, we randomly picked 100 pixels from each images and get the following response function.</p>
+            <p><strong>lambda = 60<br/>Sample pixels = 100<br>Weight: $w = @(z) double(128-abs(z-128)))$</strong></p>
+            <img class="img-fluid" src="result_img/Recovering_HDR_Radiance_Maps/Response_function.png">
+            <p><br/>After calculating the log irradiance versus pixel value function, we recover the image by solving $E_i$ per channal. To be more specific, we calculated the result of $g(Z_{ij})-ln\Delta t_j$ and divide by the weight. And finally we take the inverse log of the value to recover the true color. </p>
+            <p>Here's the result which looks better than previous results.</p>
+            <p>Estimated Log Irradiance:</p>
+            <div class="row">
+              <div class="col-lg-4">
+                <img class="img-fluid" src="result_img/Recovering_HDR_Radiance_Maps/lir_g_1.png">
+                <p>Exposure: 1/6<p>
+              </div>
+              <div class="col-lg-4">
+                <img class="img-fluid" src="result_img/Recovering_HDR_Radiance_Maps/lir_g_2.png">
+                <p>Exposure: 1/25<p>
+              </div>
+              <div class="col-lg-4">
+                <img class="img-fluid" src="result_img/Recovering_HDR_Radiance_Maps/lir_g_3.png">
+                <p>Exposure: 1/100<p>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-lg-4">
+                <img class="img-fluid" src="result_img/Recovering_HDR_Radiance_Maps/merging_hdr_log.png">
+                <p>HDR Log Irradiance<p>
+              </div>
+              <div class="col-lg-4">
+                <img class="img-fluid" src="result_img/Recovering_HDR_Radiance_Maps/merging_hdr_tone.png">
+                <p>ToneMapped HDR<p>
+              </div>
+              <div class="col-lg-4">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <section id="part2" class="content-section">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-8 mx-auto">
+            <h2>Panoramic transformations</h2>
+            <p>Once the correct HDR image is obtained, we have enough data to preform relighting. However, panoramic transformations are needed so that softwares such as Blender can actually use it to obtain lighting information. As suggested on the course website, we are going to perform a equirectangular transformation on the mirror ball image.</p>
+            <p>We can calculate reflection vector at each pixel of the mirror ball by the following fomula: $R = V - 2 .* dot(V, N) .* N$, where $V$ is the viewing vector and $N$ is the normal vector. Note that if we assume that the mirror ball has a unit radius, then the normal vector is exactly $(x, y, \sqrt{1 - x ^ 2 - y ^ 2})$ at every $(x, y)$ pixel. </p>
+            <div class="row">
+              <div class = "col-lg-6 mx-auto">
+                <img class="img-fluid" src="result_img/Panoramic_transformations/Latlon_Normal.png">
+                <p>Map for normal vectors.</p>
+              </div>
+              <div class = "col-lg-6 mx-auto">
+                <img class="img-fluid" src="result_img/Panoramic_transformations/Latlon_Reflections.png" >
+                <p>Map for reflection vectors.</p>
+              </div>
+            </div>
+            <p>After refelction vectors are calculated, we can easily convert them into phi - theta form according to <a href="https://en.wikipedia.org/wiki/Spherical_coordinate_system#Cartesian_coordinates">this fomula</a>.</p>
+            <div class="row">
+              <div class = "col-lg-6 mx-auto">
+                <img class="img-fluid" src="result_img/Panoramic_transformations/Latlon_Phi_theta_map.png">
+                <p>Map for phi - theta coordinates.</p>
+              </div>
+              <div class = "col-lg-6 mx-auto">
+              </div>
+            </div>
+            <p>Here is the result of equirectangular transformation:</p>
+            <img class="img-fluid" src="result_img/Recovering_HDR_Radiance_Maps/latlon_log.png">
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <section id="part3" class="content-section">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-8 mx-auto">
+            <h2>Rendering synthetic objects</h2>
+            <p>Here we use Blender to merge the object into the scene. We basically shot a background photo and created plane to cover the table area. Then we used some objects from the example and we also imported a fancy drangon from <strong>Free3D.com</strong> to make the image looks better. </p>
+            <p> To merge the object seamlessly, we also rendered a mask and an empty scence and finally use the formula $$M.*R+(1-M).*I+(1-M).*(R-E).*p$$ to merge them together. Notice that the $p$ this is parameter to control the shading effect.</p>
+            <p><strong>$ p = 2.3$</strong></p>
+            <p>Background:<p>
+            <img class="img-fluid" src="result_img/Rendering_synthetic_objects_into_photographs/background.jpg">
+            <p>Empty Scene:</p>
+            <img class="img-fluid" src="result_img/Rendering_synthetic_objects_into_photographs/render_empty.png">
+            <p>Render mask:</p>
+            <img class="img-fluid" src="result_img/Rendering_synthetic_objects_into_photographs/render_mask.png">
+            <p>Rendered Objects without background:</p>
+            <img class="img-fluid" src="result_img/Rendering_synthetic_objects_into_photographs/render_object.png">
+            <p>Final Result:</p>
+            <img class="img-fluid" src="result_img/Rendering_synthetic_objects_into_photographs/final_result.png">
+            <p>Here is another rendered example:</p>
+            <img class="img-fluid" src="result_img/Rendering_synthetic_objects_into_photographs/final_result_another_example.png">
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <section id="part3" class="content-section">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-8 mx-auto">
+            <h2>Bells & Whistles</h2>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-lg-8 mx-auto">
+            <h4>1. Other panoramic transformations</h4>
+            <p>@TODO</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-lg-8 mx-auto">
+            <h4>2. Photographer/tripod removal</h4>
+            <p>I used the HDR Shop and Debevec's method to remove tripod and photographer</p>
+            <p>Source Images: </p>
+            <div class="row">
+              <div class="col-lg-6 mx-auto">
+                <img class="img-fluid" src="result_img/removal/1.JPG">
+              </div>
+              <div class="col-lg-6 mx-auto">
+                <img class="img-fluid" src="result_img/removal/2.JPG">
+              </div>
+            </div>
+            <p></p>
+            <p>Wrapped Images: (The first one is rotated inorder to match the second one)</p>
+            <div class="row">
+              <div class="col-lg-6 mx-auto">
+                <img class="img-fluid" src="result_img/removal/1_wrapped.JPG">
+              </div>
+              <div class="col-lg-6 mx-auto">
+                <img class="img-fluid" src="result_img/removal/2_wrapped.JPG">
+              </div>
+            </div>
+            <p></p>
+            <p>Mask for merging: (Sorry for the quality, I created it with the windows picture editor)</p>
+            <div class="row">
+              <div class="col-lg-6 mx-auto">
+                <img class="img-fluid" src="result_img/removal/mask2.bmp">
+              </div>
+              <div class="col-lg-6 mx-auto">
+              </div>
+            </div>
+            <p></p>
+            <p>Final Result: </p>
+            <div class="row">
+              <div class="col-lg-6 mx-auto">
+                <img class="img-fluid" src="result_img/removal/result.JPG">
+              </div>
+              <div class="col-lg-6 mx-auto">
+              </div>
+            </div>
+            <p></p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-lg-8 mx-auto">
+            <h4>3. Local tonemapping operator</h4>
+            <p>@TODO</p>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer>
+      <div class="container text-center">
+        <p>Copyright &copy; Xintong Wu, Cong Shen 2017</p>
+      </div>
+    </footer>
+
+    <!-- Bootstrap core JavaScript -->
+    <script src="vendor/jquery/jquery.min.js"></script>
+    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Plugin JavaScript -->
+    <script src="vendor/jquery-easing/jquery.easing.min.js"></script>
+
+    <!-- Google Maps API Key - Use your own API key to enable the map feature. More information on the Google Maps API can be found at https://developers.google.com/maps/ -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCRngKslUGJTlibkQ3FkfTxj3Xss1UlZDA&sensor=false"></script>
+
+    <!-- Custom scripts for this template -->
+    <script src="js/grayscale.min.js"></script>
+
+  </body>
+
+</html>

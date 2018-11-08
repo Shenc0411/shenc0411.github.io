@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+
+    
+    <script type="text/javascript" async			src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-MML-AM_CHTML">
+    </script>
+		<script type="text/x-mathjax-config">
+		MathJax.Hub.Config({
+			tex2jax: {inlineMath: [['$','$'], ['\\(','\\)']]}
+		});
+    </script>
+    
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <title>CS445 Computational Photography Project 5</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="vendor/bootstrap/css/bootstrap.css" rel="stylesheet">
+
+    <!-- Custom fonts for this template -->
+    <link href="vendor/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+    <link href="https://fonts.googleapis.com/css?family=Lora:400,700,400italic,700italic" rel="stylesheet" type="text/css">
+    <link href='https://fonts.googleapis.com/css?family=Cabin:700' rel='stylesheet' type='text/css'>
+
+    <!-- Custom styles for this template -->
+    <link href="css/grayscale.css" rel="stylesheet">
+
+  </head>
+
+  <body id="page-top">
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top" id="mainNav">
+      <div class="container">
+        <a class="navbar-brand js-scroll-trigger" href="#page-top">CS445 Computational Photography</a>
+      </div>
+    </nav>
+
+    <!-- Intro Header -->
+    <header class="masthead">
+      <div class="intro-body">
+        <div class="container">
+          <div class="row">
+            <div class="col-lg-8 mx-auto">
+              <h1 class="brand-heading">Project 5</h1>
+              <p class="intro-text">Video Stitching and Processing </p>
+              <p class="intro-text">By Cong Shen (cshen19)</p>
+              <a href="#about" class="btn btn-circle js-scroll-trigger">
+                <i class="fa fa-angle-double-down animated"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- About Section -->
+    <section id="about" class="content-section">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-8 mx-auto">
+            <h2>About this project</h2>
+            <p>In this project, we are focusing on stiching frames from a vedio into a panorama by computing homographies using SIFT and RANSAC. More information about this project can be found on the course website:</p>
+            <ul>
+              <li><a href="https://courses.engr.illinois.edu/cs445/fa2017/projects/video/ComputationalPhotograph_ProjectVideo.html">CS445 Project 5 - Video Stitching and Processing </a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="part1" class="content-section">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-8 mx-auto">
+            <h2>Part 1: Stitch two key frames</h2>
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-lg-8 mx-auto">
+            <p>In order to stich two frames, we have to find key points and calculator their orientation discriptors. Fortunately, the funtion $sift$ in the libraray $VLfeat$ can cauculate both of them for us. Then we can compute the homography $H$ between these two frames using the following fomula:</p>
+            <p>let $x' = Hx$, where
+              \[ 
+              x' = 
+                \begin{bmatrix}
+                    w'u' \\
+                    w'v' \\
+                    w'
+                \end{bmatrix}
+              H = 
+                \begin{bmatrix}
+                    h_1 & h_2 & h_3 \\
+                    h_4 & h_5 & h_6 \\
+                    h_7 & h_8 & h_9
+                \end{bmatrix}
+              \]
+            </p>
+            <p>Then we can solve the following the following matrix for $h$,
+              \[
+                \begin{bmatrix}
+                -u & -v & -1 & 0 & 0 & 0 & uu' & vu' & u' \\
+                0 & 0 & 0 & -u & -v & -1 & uv' & vv' & v' 
+                \end{bmatrix}
+                h = 0
+                \Rightarrow
+                Ah = 0
+              \]
+              We can apply SVD to $A$ s.t. $UDV^T = A$ and $h = V_{smallest}$.$
+            </p>
+            
+            <p>Result of mapping frame 270 onto frame 450:</p>
+            <div class="row">
+              <div class="col-lg-12">
+                <img class="img-fluid" src="result_img/part1.jpg">
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-lg-6">
+                <img class="img-fluid" src="result_img/part1_1.jpg">
+                <p>Frame 270</p>
+              </div>
+              <div class="col-lg-6">
+                <img class="img-fluid" src="result_img/part1_2.jpg">
+                <p>Frame 450(Reference Frame)</p>
+              </div>
+            </div>
+            <p></p>
+          </div>
+        </div>
+        
+   
+      </div>
+    </section>
+    
+    <section id="part2" class="content-section">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-8 mx-auto">
+            <h2>Part 2: Panorama using five key frames</h2>
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-lg-8 mx-auto">
+            <p>Mapping other frames are alomost the same are part1.</p>
+            <p>To make a panorama, I am using frames [90 270 450 630 810] as key frames and frame 450 as the reference frame. Here is the result:</p>
+            <div class="row">
+              <div class="col-lg-12">
+                <img class="img-fluid" src="result_img/panorama.jpg">
+              </div>
+            </div>
+            <p>Note that I did not use any advanced blending algorithm for this panorama. I just directly replaced blank pixels with pixels from other mapped frames.</p>
+          </div>
+        </div>
+        
+      </div>
+    </section>
+    
+    <section id="part3" class="content-section">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-8 mx-auto">
+            <h2>Part 3: Map the video to the reference plane</h2>
+            <p>In this part, we are just mapping all the frames onto the reference plane and then convert them into a vedio.</p>
+            <p>However, for some frames, due to camera shankes and having bad luck in RANSAC, I did not get very good results so that the mapped video looks really shaky.</p>
+            <p>I tried to improve RANSAC results by increasing the number of iterations and slightly increased the threshold. Take frame 6 as an example, here is the result:</p>
+            <div class="row">
+              <div class="col-lg-6">
+                <img class="img-fluid" src="result_img/part3_bad_result.jpg">
+                <p>Iteration: 1000 Threshold: 1</p>
+              </div>
+              <div class="col-lg-6">
+                <img class="img-fluid" src="result_img/part3_good_result.jpg">
+                <p>Iteration: 4096 Threshold: 1.2</p>
+              </div>
+            </div>
+            <p>Hers is the video result:</p>
+            <iframe width="560" height="315" src="https://www.youtube.com/embed/uaplcxioxsM" frameborder="0" allowfullscreen></iframe>
+          </div>
+        </div>
+        
+      </div>
+    </section>
+    
+    <section id="part4" class="content-section">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-8 mx-auto">
+            <h2>Part 4: Create background panorama</h2>
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-lg-8 mx-auto">
+            For estimating which pixel belongs to the background, I used the median pixel as from all mapped frames suggested in the slide. Here is the background panorama:
+            <div class="row">
+              <div class="col-lg-12">
+                <img class="img-fluid" src="result_img/background_panorama.jpg">
+              </div>
+            </div>
+            <p>I believe the result at the margin of the panorama is not very satisfactory because there is too few pixels mapped at that position and the median of those pixels became 0. Poor mapping of pixels at the left-most and the right-most areas also had negative influence on the result quality.</p>
+          </div>
+        </div>
+        
+      </div>
+    </section>
+    
+    <section id="part5" class="content-section">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-8 mx-auto">
+            <h2>Part 5: Create background movie</h2>
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-lg-8 mx-auto">
+            <p>In this part, we have the background panorama. To create a backround movie from it, we have to determine which area of pixel belongs to which frame. For this process, we have to create a mask with the size of the original frames. For each frame use the homography matrix $H$ to map it onto the reference frame. Then we will have an area of background panorama that belongs to the certain frame. We can apply the inverse transform of homography to it so that the frame can map back to its original position. Here is the background movie:</p>
+            <iframe width="560" height="315" src="https://www.youtube.com/embed/YfSN8TRwe7I" frameborder="0" allowfullscreen></iframe>
+          </div>
+          
+        </div>
+        
+      </div>
+    </section>
+    
+    <section id="part6" class="content-section">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-8 mx-auto">
+            <h2>Part 6: Create foreground movie</h2>
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-lg-8 mx-auto">
+            <p>By definition, foregorund pixels are pixels that stand out from the background pixels. We can take each frame from the originial movie and its background frame from the background movie. And then compare each pixel of these two frames. If the difference between a pixrl from the original frame and the background frame is larger than a threshold, it will be determined as a foreground pixel. Here is the foregorund movie:</p>
+            <iframe width="560" height="315" src="https://www.youtube.com/embed/JIRee9T5JDA" frameborder="0" allowfullscreen></iframe>
+            <p>Threshold: 0.35</p>
+          </div>
+        </div>
+        
+      </div>
+    </section>
+    
+    <section id="ec" class="content-section">
+      <div class="container">
+        <div class="row">
+          <div class="col-lg-8 mx-auto">
+            <h2>Bells & Whistles</h2>
+            <p>@TODO</p>
+          </div>
+        </div>
+        
+      </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer>
+      <div class="container text-center">
+        <p>Copyright &copy; Cong Shen 2017</p>
+      </div>
+    </footer>
+
+    <!-- Bootstrap core JavaScript -->
+    <script src="vendor/jquery/jquery.min.js"></script>
+    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Plugin JavaScript -->
+    <script src="vendor/jquery-easing/jquery.easing.min.js"></script>
+
+    <!-- Google Maps API Key - Use your own API key to enable the map feature. More information on the Google Maps API can be found at https://developers.google.com/maps/ -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCRngKslUGJTlibkQ3FkfTxj3Xss1UlZDA&sensor=false"></script>
+
+    <!-- Custom scripts for this template -->
+    <script src="js/grayscale.min.js"></script>
+
+  </body>
+
+</html>
